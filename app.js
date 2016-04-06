@@ -45,7 +45,7 @@ app.use(bodyParser.urlencoded({
 app.get('/', function (req, res) {
   var x = Xray();
   var client = redis.createClient({detect_buffers: true});
-  currency = { from_cache: false };
+  var currency = { from_cache: false };
   res.set({'Content-Type': 'application/json'});
 
   client.hkeys("currency", function (err, value) {
