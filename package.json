@@ -4,11 +4,12 @@
   "description": "",
   "main": "app.js",
   "dependencies": {
-    "cors": "^2.7.1",
     "body-parser": "^1.15.0",
     "cheerio": "^0.20.0",
+    "cors": "^2.7.1",
     "express": "^4.13.4",
     "mongoose": "^4.4.11",
+    "node-schedule": "^1.1.0",
     "redis": "^2.5.3",
     "request": "^2.69.0",
     "requests": "^0.1.7",

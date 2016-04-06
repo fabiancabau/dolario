@@ -3,13 +3,15 @@ var request = require('request');
 var app = express();
 var server = require('http').Server(app);
 var path = require('path');
-var Xray = require('x-ray');
+
 var bodyParser = require('body-parser');
 var cors = require('cors');
 
 var Sequence = require('sequence').Sequence;
 var sequence = Sequence.create();
 
+var mining = require('./helpers/mining');
+var pushNotifications = require('./helpers/pushnotifications');
 
 var redis = require("redis");
     
@@ -30,11 +32,6 @@ mongoose.connect('mongodb://localhost/dolario');
 console.log('Listening on port 3000');
 server.listen(3000);
 
-// app.use(function(req, res, next) {
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//   next();
-// });
 
 app.use(cors());
 // Use the body-parser package in our application
@@ -43,42 +40,24 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.get('/', function (req, res) {
-  var x = Xray();
-  var client = redis.createClient({detect_buffers: true});
-  var currency = { from_cache: false };
+  var currency = {};
   res.set({'Content-Type': 'application/json'});
 
-  client.hkeys("currency", function (err, value) {
-    if (value[0] != '') {
-      currency = value[0];
-      currency.from_cache = true;
-      return res.send(currency);
-    }
-    else {
+  mining.getCachedDolar().then(function(value) { 
+    currency.dolar = JSON.parse(value);
 
-      sequence.then(function(next) {
-        x('http://dolarhoje.com', '#nacional@value')(function(err, val) {
-          currency.dolar = val;
-          next();
-        });
-      })
-      .then(function(next, err) {
-        x('http://dolarhoje.com/libra/', '#nacional@value')(function(err, val) {
-          currency.libra = val;
-          next();
-        });
-      })
-      .then(function(next, err) {
-        x('http://dolarhoje.com/euro/', '#nacional@value')(function(err, val) {
-          currency.euro = val;
-
-          client.hset('currency', JSON.stringify(currency), 0, redis.print);
-          res.json(currency);
-        });
+    mining.getCachedLibra().then(function(value) { 
+      currency.libra = JSON.parse(value);
+      
+      mining.getCachedEuro().then(function(value) { 
+        currency.euro = JSON.parse(value);
+        res.json(currency);
       });
 
-    }
+    });
+
   });
+      
     
 });
 
@@ -147,4 +126,41 @@ app.post('/api/users/notification', function (req, res) {
   
 });
 
+var schedule = require('node-schedule');
+
+var hourlyRule = new schedule.RecurrenceRule();
+hourlyRule.dayOfWeek = [new schedule.Range(1, 5)];
+hourlyRule.minute = 0;
+
+var hourly = schedule.scheduleJob(hourlyRule, function(){
+  console.log('Hourly cron function running', new Date().toString());
+  pushNotifications.sendHourly();
+});
+
+var openingRule = new schedule.RecurrenceRule();
+openingRule.dayOfWeek = [new schedule.Range(1, 5)];
+openingRule.minute = 0;
+openingRule.hour = 9;
+
+var opening = schedule.scheduleJob(openingRule, function(){
+  console.log('Opening cron function running', new Date().toString());
+});
+
+var closingRule = new schedule.RecurrenceRule();
+closingRule.dayOfWeek = [new schedule.Range(1, 5)];
+closingRule.minute = 0;
+closingRule.hour = 17;
+
+var closing = schedule.scheduleJob(closingRule, function(){
+  console.log('Closing cron function running', new Date().toString());
+});
+
+var sanity = schedule.scheduleJob('*/1 * * * *', function(){
+  console.log('Sanity cron function running', new Date().toString());
+});
+
+var cacheCurrency = schedule.scheduleJob('*/10 * * * *', function(){
+  console.log('Cache cron function running', new Date().toString());
+  mining.cacheCurrencies();
+});
 
