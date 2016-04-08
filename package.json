@@ -4,6 +4,7 @@
   "description": "",
   "main": "app.js",
   "dependencies": {
+    "bluebird": "^3.3.4",
     "body-parser": "^1.15.0",
     "cheerio": "^0.20.0",
     "cors": "^2.7.1",

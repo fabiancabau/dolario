@@ -10,11 +10,25 @@ var bluebird = require("bluebird");
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
 
+
+var db = mongoose.connection;
+
+db.on('error', console.error);
+
+db.once('open', function() {
+  console.log('Connected to MongoDB successfully');
+});
+
+mongoose.connect('mongodb://localhost/dolario');
+
+
 var urls = {
 	DOLAR: 'http://dolarhoje.com',
 	LIBRA: 'http://dolarhoje.com/libra/',
 	EURO: 'http://dolarhoje.com/euro/'
 }
+
+var targetId = '#nacional@value';
 
 
 var Mining = function () {};
@@ -22,15 +36,15 @@ var Mining = function () {};
 
 //On demand currencies ==========================
 Mining.prototype.getDolar = function () {
- 	return x('http://dolarhoje.com', '#nacional@value');
+ 	return x(urls.DOLAR, targetId);
 };
 
 Mining.prototype.getLibra = function () {
- 	return x('http://dolarhoje.com/libra/', '#nacional@value');
+ 	return x(urls.LIBRA, targetId);
 };
 
 Mining.prototype.getEuro = function () {
- 	return x('http://dolarhoje.com/euro/', '#nacional@value');
+ 	return x(urls.EURO, targetId);
 };
 
 // ============================================
