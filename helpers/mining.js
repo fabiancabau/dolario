@@ -4,23 +4,12 @@ var Xray = require('x-ray');
 var redis = require("redis");
 var x = Xray();
 var client = redis.createClient({detect_buffers: true});
+var mongoose = require('mongoose');
 
 var bluebird = require("bluebird");
 
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
-
-
-var db = mongoose.connection;
-
-db.on('error', console.error);
-
-db.once('open', function() {
-  console.log('Connected to MongoDB successfully');
-});
-
-mongoose.connect('mongodb://localhost/dolario');
-
 
 var urls = {
 	DOLAR: 'http://dolarhoje.com',
